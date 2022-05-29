@@ -78,7 +78,7 @@ public interface UserRedisRepository extends CrudRepository<User, UUID> { }
 
 ---
 
-## Insert Test
+## CRUD Test
 ```java
 @SpringBootTest
 public class RedisRepositoryCrudTest {
@@ -205,3 +205,110 @@ redisTemplate.setKeySerializer(new StringRedisSerializer());
 redisTemplate.setValueSerializer(new StringRedisSerializer());
 ```
 다음과 같이 Redis Template의 <code>set...Serializer</code> Method를 사용하여 Serializer를 따로 지정해 줄 수 있다.
+
+## CRUD Test
+
+### String
+
+```java
+@Autowired
+private StringRedisTemplate redisTemplate;
+
+private final String key = "RedisTemplateTest_String";
+
+private final ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+    
+    ...
+    
+        valueOperations.set(key, "1");
+
+        // 다음과 같이 key에 관한 만료시간을 지정해 줄 수 있다.
+        redisTemplate.expire(key, Duration.ofSeconds(10));
+        
+        // get 함수를 통해 key에 해당하는 value를 가져올 수 있다.
+        final String item = valueOperations.get(key);
+        
+        // increment, decrement 함수를 통해 증가, 감소 연산을 할 수 있다.
+        valueOperations.increment(key);
+        valueOperations.decrement(key, 10);
+        
+        // 또는 set함수를 통해 key에 저장된 값을 변경 할 수도 있다.
+        valueOperations.set(key, "40");
+        
+        redisTemplate.delete(key);
+
+        // 다음과 같이 할 경우 value 값 조회와 동시에 item을 삭제한다.
+        final String itme = valueOperations.getAndDelete(key);
+```
+
+### List
+
+```java
+@Autowired
+private StringRedisTemplate redisTemplate;
+
+private final String key = "RedisTemplateTest_List";
+
+private final ListOperations<String, String> listOperations = redisTemplate.opsForList();
+
+    ...
+
+        // List에 아래 문자 추가 
+        listOperations.rightPush(key, "r");
+        listOperations.rightPush(key, "e");
+        listOperations.rightPush(key, "d");
+        listOperations.rightPush(key, "i");
+        listOperations.rightPush(key, "s");
+
+		// pushAll 함수로 여러개를 추가할 수 있다.
+        listOperations.rightPushAll(key, " ", "t", "e", "m", "p", "l", "a", "t", "e");
+
+        // 다음과 같이 key에 관한 만료시간을 지정해 줄 수 있다.
+        redisTemplate.expire(key, Duration.ofSeconds(10));
+
+		// 해당 함수로 리스트의 index에 해당하는 value를 가져올 수 있다.
+        final long idxForGet = 4;
+        final String nthChar = listOperations.index(key, idxForGet);
+        System.out.println(idxForGet + "th character is " + nthChar);
+
+        // size 함수를 통해 list의 사이즈를 가져올 수 있다.
+        final Long size = listOperations.size(key);
+        System.out.println("size is " + size);
+
+		// range 함수는 범위를 지정하여 범위에 해당하는 list의 value를 가져올 수 있다.
+        final List<String> allOfItem = listOperations.range(key, 0, -1);
+        System.out.print("all of list value : ");
+        for(String it : allOfItem) {
+            System.out.print(it);
+        }
+        System.out.println();
+
+        ...
+		
+        final Consumer<String> printAll = (comment)-> {
+            final List<String> allOfItem = listOperations.range(key, 0, -1);
+            System.out.print("all of list value - "+comment+" : ");
+            for(String it : allOfItem) {
+                System.out.print(it);
+            }
+            System.out.println();
+        };
+		
+        // left, right 원하는 방향으로 push, pop이 가능
+        listOperations.leftPush(key, " ");
+        listOperations.leftPushAll(key, "s", "i", "h", "t");
+        printAll.accept("after left push");
+
+        listOperations.rightPop(key, 9);
+        printAll.accept("after right pop");
+
+		// redisTemplate의 delete 함수를 통해 key에 해당하는 값을 삭제할 수 있다.
+        redisTemplate.delete(key);
+
+}
+```
+
+위와 같이 redis의 키워드와 유사한 네이밍의 함수를 사용하여 redis에 값을 저장 또는 삭제, 조회, 수정 등.. 이 가능하며
+Value, List 타입의 데이터 외에도 Set, ZSet, Hash 등.. 의 타입도 Operations를 통해 Redis의 데이터를 조작할 수 있다.
+자세한 사항은 [Spring Docs](https://docs.spring.io/spring-data/redis/docs/current/api/org/springframework/data/redis/core/HashOperations.html) 를 참고 
+(해당 링크는 Hash 타입에 관한 Docs)
