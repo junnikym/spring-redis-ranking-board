@@ -126,6 +126,8 @@ public class RedisRepositoryCrudTest {
 }
 ```
 
+* ref : <https://bcp0109.tistory.com/328>
+
 ---
 
 ## Redis Template
@@ -312,3 +314,36 @@ private final ListOperations<String, String> listOperations = redisTemplate.opsF
 Value, List 타입의 데이터 외에도 Set, ZSet, Hash 등.. 의 타입도 Operations를 통해 Redis의 데이터를 조작할 수 있다.
 자세한 사항은 [Spring Docs](https://docs.spring.io/spring-data/redis/docs/current/api/org/springframework/data/redis/core/HashOperations.html) 를 참고 
 (해당 링크는 Hash 타입에 관한 Docs)
+
+* ref : <https://sabarada.tistory.com/105>
+
+---
+
+## Redis Pub/Sub
+
+Redis의 <code>Subscribe</code>, <code>Unsubscribe</code>, <code>Publish</code>는 메시지 페러다임을 구현한 기능이다.
+<code>Sender</code><sub>Publisher</sub>는 <code>Receiver</code><sub>Subscriber</sub>에게 값을 전달하는게 아닌 
+해당 채널에 메시지를 전달하면 그 메시지를 구독하고 있는 <code>Receiver</code><sub>Subscriber</sub>에게 메시지를 전송한다.
+
+### Channel, Brocker and Topic
+
+<code>Publisher</code>가 <code>Message</code>를 보내면 해당 <code>Message</code>는 <code>Broker</code>에게 전달된다.
+여기서 <code>Broker</code>는 <code>Channel</code>이라고도 불린다.<br/> 
+이때, <code>Message</code>는 <code>Topic</code>이라는 것을 사용하여 누구의 메시지인지 구분한다. 
+
+<code>Subscriber</code>는 <code>Broker</code>를 통해 <code>Topic</code>으로 구분된 <code>Message</code>를 가져감으로써
+최종적으로 <code>Message</code>를 받아갈 수 있다.
+
+![pub/sub and brocker, topic](./img/brokerAndTopic.png)
+
+### Pros & Cons
+
+이러한 Pub/Sub messaging pattern은 <code>느리다</code>라는 단점이 있지만 반면 <code>안전하다</code>라는 장점이 있다.
+
+여기서 <code>Broker</code><sub><code>Channel</code></sub>(이)가 없다면 그만큼 중간 단계가 하나 없어지기 때문에 당연히 빨라질 수 밖에 없다.
+
+하지만, <code>Subscriber</code>에 장애가 생겨 <code>Message</code>를 받을 수 없는 상황에 놓인다면 
+<code>Publisher</code>는 계속 하염없이 <code>Subscriber</code>를 가다릴수는 없다. <br/>
+그렇기 때문에 <code>Broker</code><sub><code>Channel</code></sub>, <code>Topic</code>를 사용하여 이러한 상황을 방지하고 안정적으로 메시지를 보내는 방법이 등장하였다.
+
+* ref : <https://sugerent.tistory.com/585>
