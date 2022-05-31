@@ -347,3 +347,58 @@ Redis의 <code>Subscribe</code>, <code>Unsubscribe</code>, <code>Publish</code>�
 그렇기 때문에 <code>Broker</code><sub><code>Channel</code></sub>, <code>Topic</code>를 사용하여 이러한 상황을 방지하고 안정적으로 메시지를 보내는 방법이 등장하였다.
 
 * ref : <https://sugerent.tistory.com/585>
+
+### On Spring
+
+< Configuration Class >
+```java
+    ...
+
+    @Bean
+    MessageListenerAdapter messageListener() {
+        return new MessageListenerAdapter(new RedisMessageSubscriber());
+    }
+
+    @Bean
+    RedisMessageListenerContainer redisContainer() {
+        final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+		container.setConnectionFactory(redisTemplate.getConnectionFactory());
+		container.addMessageListener(messageListener(), topic());
+		return container;
+    }
+
+    @Bean
+    ChannelTopic topic() {
+        return new ChannelTopic("event");
+    }
+    
+    ...
+```
+
+<code>RedisMessageListenerContainer</code>를 적용시키므로써 <code>Topic</code>에 관한 <code>Message</code>를 가져올 수 있다.
+
+<code>Listener</code>가 <code>Publisher</code>의 <code>Message</code>를 받기위해서 <code>Publisher</code>를 <code>Subscribe</code>해야한다.
+그렇기 때문에 <code>RedisMessageListenerContainer</code>에 <code>Subscriber</code> 객체를 세팅해주어야한다.
+
+< Subscriber Service >
+```java
+@Service
+public class RedisMessageSubscriber implements MessageListener {
+
+    public static List<String> messageList = new ArrayList<>();
+
+    @Override
+    public void onMessage(final Message message, final byte[] pattern) {
+        messageList.add(message.toString());
+        System.out.println("Message received: " + new String(message.getBody()));
+
+    }
+}
+```
+
+<code>Subscriber</code>는 <code>MessageListenerAdapter</code>의 생성자로 전달되며 여기서 생성된 Adapter를 Container에 설정해줌으로써 최종적으로 
+Spring은 Redis의 <code>Publisher</code>를 <code>Listen</code> 할 준비가 된 것이다.
+
+여기서 <code>MessageListener</code>를 상속받은 <code>Subscriber</code>는 <code>onMessage</code> 메소드의 내용을 정의해줌으로써 
+<code>Listener</code>가 <code>Message</code>를 받으면 어떤 일을 실행할지 구현할 수 있다.
+
