@@ -1,5 +1,6 @@
 package edu.junnikym.springredisrankingboard.config;
 
+import edu.junnikym.springredisrankingboard.redis.service.RedisMessagePublisher;
 import edu.junnikym.springredisrankingboard.redis.service.RedisMessageSubscriber;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -38,15 +39,19 @@ public class RedisConfig {
 	}
 
 	@Bean
-	MessageListenerAdapter messageListener() {
-		return new MessageListenerAdapter(new RedisMessageSubscriber());
+	MessageListenerAdapter messageListener(RedisMessageSubscriber redisMessageSubscriber) {
+		return new MessageListenerAdapter(redisMessageSubscriber);
 	}
 
 	@Bean
-	RedisMessageListenerContainer redisContainer() {
+	RedisMessageListenerContainer redisContainer(
+			RedisConnectionFactory redisConnectionFactory,
+			MessageListenerAdapter messageListenerAdapter,
+			ChannelTopic topic
+	) {
 		final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-		container.setConnectionFactory(redisConnectionFactory());
-		container.addMessageListener(messageListener(), topic());
+		container.setConnectionFactory(redisConnectionFactory);
+		container.addMessageListener(messageListenerAdapter, topic);
 		return container;
 	}
 

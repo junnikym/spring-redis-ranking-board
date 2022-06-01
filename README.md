@@ -402,3 +402,43 @@ Spring은 Redis의 <code>Publisher</code>를 <code>Listen</code> 할 준비가 �
 여기서 <code>MessageListener</code>를 상속받은 <code>Subscriber</code>는 <code>onMessage</code> 메소드의 내용을 정의해줌으로써 
 <code>Listener</code>가 <code>Message</code>를 받으면 어떤 일을 실행할지 구현할 수 있다.
 
+### MessageListenerAdapter
+
+Configuration 코드를 보면 <code>Subscriber</code>를 <code>MessageListenerAdapter</code>로 씌어 <code>RedisMessageListenerContainer</code>에 적용시킨다.
+
+사실 아래와 같이 <code>Subscriber</code>를 바로 <code>Container</code>에 적용시켜도 아무런 이상이 없다.
+
+```java
+    @Bean
+	RedisMessageListenerContainer redisContainer() {
+		final RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+		container.setConnectionFactory(redisConnectionFactory());
+		container.addMessageListener(new RedisMessageSubscriber(), topic());
+		return container;
+	}
+```
+
+그럼 <code>MessageListenerAdapter</code> 객체는 무엇을 하며 왜 사용할까? 
+
+#### Java Message Service (JMS) & Message Driven POJO (MDP)
+
+<code>JMS</code>는 RebbitMQ, ActiveMQ 와 같은 메시지 서버와 메세지를 주고받는 기능을 표준화 한 것이다.
+즉, JMS란 비동기식 메시징을 위한 표준 API이다. [ref](https://velog.io/@zamonia500/Spring-Messaging-with-JMSJava-Messaging-Service)
+
+<code>Message Driven</code> 란? <code>Event Driven</code>이라 부르기도 하며 어떤 Event가 발생하면 해당 Event에 반응하여 동작을 하는 방식을 말한다. [ref](https://ko.wikipedia.org/wiki/이벤트_(컴퓨팅))
+
+메시지를 비동기적으로 받는다는것은 특정 Queue나 Topic에 대해 응답 논블록킹 프로세스를 가지고 있다는 것이다. 
+이 기술은 이벤트 드리븐 형태의 처리 방식이다. 메세지 리스너에서 메시지가 존재하는것을 알려준다. 
+
+<code>Message Driven Beans</code>는 비동기 리스너를 위한 Java EE 기술이다. 
+Spring Framework 는 MDP를 사용한 비동기 리스너 역시 지원 한다. 이를 적용하는 방식에는 여러가지 방법이 있지만 
+그 중 하나가 <code>MessageListenerAdapter</code>를 사용하는 것이다.
+
+<code>MessageListenerAdapter</code>는 <code>POJO</code> 클래스를 Wrapping 하여 객체를 비동기 메시지 리스너로 만들어준다.  
+ * POJO <sub>Plain Old Java Object</sub> : 주요 Java 오브젝트 모델, 컨벤션 또는 프레임워크를 따르지 않는 Java 오브젝트; [ref](https://velog.io/@dion/what-is-POJO)
+
+
+ * ref : <https://m.blog.naver.com/ssi5719/220551550668>
+ 
+결론적으로 <code>MessageListenerAdapter</code>로 사용하는 이유는 <code>Listener</code>가 비동기적으로 메시지를 받을 수 있게 만들기 위함이다.
+
