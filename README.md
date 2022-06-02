@@ -442,3 +442,42 @@ Spring Framework 는 MDP를 사용한 비동기 리스너 역시 지원 한다. 
  
 결론적으로 <code>MessageListenerAdapter</code>로 사용하는 이유는 <code>Listener</code>가 비동기적으로 메시지를 받을 수 있게 만들기 위함이다.
 
+### Do publish a message 
+
+< Publisher Message >
+```java
+@Service
+public class RedisMessagePublisher<T> {
+
+	private RedisTemplate<String, T> redisTemplate;
+
+	private ChannelTopic topic;
+
+	public RedisMessagePublisher(RedisTemplate<String, T> redisTemplate, final ChannelTopic topic) {
+		this.redisTemplate = redisTemplate;
+		this.topic = topic;
+	}
+
+	public void publish(T message) {
+		redisTemplate.convertAndSend(topic.getTopic(), message);
+	}
+
+}
+```
+
+해당 Publisher Service 를 사용하여 Message를 발행해보면 해당 위에서 정의한 Subscriber Service에 의해서 
+Message 내용이 콘솔에 출력된다.
+
+```java
+    ...
+
+    @Test
+	void pubSubTest() {
+		redisMessagePublisher.publish("published message");
+	}
+	
+    ...
+
+out : 'Message received: published message'
+```
+
