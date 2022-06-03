@@ -480,4 +480,29 @@ Message 내용이 콘솔에 출력된다.
 
 out : 'Message received: published message'
 ```
+---
 
+## Redis Transaction
+
+Redis는 RDB와 다르게 Rollback을 지원하지 않는다. 
+단, <code>Queue</code>에 명령을 넣고 쌓인 명령을 일괄적으로 처리함으로써 다른 명령과의 충돌을 보장한다.  
+
+<code>MULTI</code>, <code>EXEC</code>, <code>DISCARD</code>, <code>WATCH</code> 명령어를 이용하여 <code>Transaction</code>을 구상할 수 있다.
+
+| 키워드 | 설명  |
+|:---:|:---|
+| MULTI | Transaction을 시작; 이후 들어오는 커맨드는 Queue에 쌓이게 된다. |
+| EXEC | Queue에 쌓여있는 명령어를 일괄적으로 실행 |
+| DISCARD | Transaction을 취소 |
+| WATCH | Optimistic Lock; UNWATCH 되기전에는 1번의 EXEC 또는 Transaction 아닌 다른 커맨드만 허용 |
+| UNWATCH | WATCH 중단 |
+
+> Optimistic Lock <sub>낙관적 잠금</sub> <br/>
+> 데이터 갱신 시 충돌이 일어나지 않을거라고 가정하에 Lock을 적용 <br/> 
+> 반대로 Pessimistic Lock <sub>비관적 잠금</sub>은 충돌이 일어날것이라 가정하에 Lock을 적용한다. <br/>
+> <br/>
+> 따라서 Optimistic Lock은 Dirty read가 되어도 상관이 없는 곳에 사용이된다.<br/>
+> <br/>
+> ref : <https://itdar.tistory.com/390>
+ 
+*ref : <https://caileb.tistory.com/205>
