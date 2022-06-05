@@ -571,3 +571,32 @@ public void serviceFunc() {
 ```
 
 다음과 같이 <code>@Transaction</code> 어노테이션을 사용하여 적용시킬 수 있다. 
+
+---
+
+### Single-Thread vs Multi-Thread
+
+Redis를 서칭하다보면 Redis는 Single-Thread 라는 블로그도 있으며 Multi-Thread 라는 블로그도 존재한다.
+
+결론부터 말하면 Redis는 ver 4.0 부터 4개의 쓰래드를 사용하여 동작한다. <br/>
+하지만 Core 동작들은 모두 Main-Thread 하나에서 진행하기 때문에 Single-Thread 로 보는것이다.
+
+> ver 6.0 부터는 Threaded IO 가 추가되어 사용자 명령이 Multi-Thread 가 지원이 된다. <br/>
+> 하지만 이 또한 I/O Socket read/write 를 할때 멀티쓰레드로 동작하며 코어부분은 여전히 Single-Thread 로 동작한다.<br/>
+> <https://taes-k.github.io/2020/07/23/redis-essential/>, <https://redislabs.com/blog/diving-into-redis-6/> 
+
+Main-Thread 외 나머지 3개의 Sub-Thread 의 역할은 다음과 같다
+
+| 번호 |  | 설명  |
+|:---:|:---:|:---|
+| 1 | BIO_CLOSE_FILE | AOF에 re-write 후 파일을 close 할 때 동작 (AOF를 비활성화해도 Thread는 생성된다.) |
+| 2 | BIO_AOF_FSYNC | 매 초당 AOF 에 내용을 쓸 때 동작 |
+| 3 | BIO_LAZY_FREE | UNLINK, 비동기 FLUSHALL 또는 FLUSHDB 명령을 처리할 때 동작 |
+
+* ref : <http://redisgate.kr/redis/configuration/redis_thread.php>
+
+> AOF 란? <br/>
+> AOF<sub>Append Only File</sub> 방식은 매 명령이 실행될때 마다 파일에 기록되는 Redis의 Persistence 방식 중 하나이다. <br/>
+> 조회 명령은 기록되지 않으며 이 외에도 RDB<sub>Redis Database</sub> 방식이 존재하는데 이는 특정 시점에 Snapshot을 바이너리 파일로 저장하여 AOF보다 파일 사이즈가 작으면서도 로딩속도가 빠르다. <br/>
+> <br/>
+> 따라서 매 명령에 기록되는 AOF가 RDB보다 안전하기 때문에 안전성을 추구하면 AOF를, 안정성보다 속도를 추구하면 RDB를 사용하면된다. (default는 AOF를 사용한다.)
