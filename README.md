@@ -506,3 +506,68 @@ Redis는 RDB와 다르게 Rollback을 지원하지 않는다.
 > ref : <https://itdar.tistory.com/390>
  
 *ref : <https://caileb.tistory.com/205>
+
+
+### Redis Transaction on Spring
+
+Spring에서 Redis Transaction을 적용하는 방법은 크게 2가지가 있는데 
+하나는 Operation에서 <code>multi</code>와 <code>exec</code>를 사용하는 것이고,
+다른 하나는 <code>@Transaction</code>어노테이션을 사용하는 것이다.
+
+이 글에서는 <code>@Transaction</code>을 활용하는 방법을 소개하고자 한다.
+
+[Spring Docs](https://spring.getdocs.org/en-US/spring-data-docs/spring-data-redis/reference/redis/tx.html)
+에 따르면 Spring에서 기본적으로 Transaction을 Disabled로 설정하고 있으며 아래와 같은 설정을 통해 Transaction을 활성화 시켜야 <code>@Transaction</code> 어노테이션을 사용할 수 있다.
+
+설정을 하기 위해선 아래의 3가지 설정을 진행해야한다 
+
+1. <code>@Transaction</code> 어노테이션을 사용하기위해 Spring Context 설정
+2. 현재 Thread에 Connection을 바인딩하여 트랜잭션을 적용하도록 설정
+3. PlatfromTransactionManager를 Bean으로 등록
+
+> 3step에 PlatfromTransactionManager를 Bean으로 등록하는 이유는 Redis Client인 Jedis와 Lettuce가 
+> Transaction Manager를 제공하지 않기 때문에 JDBC나 JPA의 Transaction Manager를 사용해야한다.
+
+< Configuration Class >
+```java
+@Configuration
+@EnableTransactionManagement    // + 1 step
+public class RedisConfig {
+  
+    ...
+
+    @Bean
+    public RedisTemplate<?, ?> redisTemplate() {
+    
+        ...
+      
+        redisTemplate.setEnableTransactionSupport(true);    // + 2 step
+      
+        ...
+      
+    }
+
+    // + 3 step
+    @Bean
+    public PlatformTransactionManager transactionManager() throws SQLException {
+        return new DataSourceTransactionManager(dataSource());      // for JDBC
+        or
+        return new JpaTransactionManager(entityManagerFactory);     // for JPA
+    }
+          
+    ...
+  
+}
+```
+
+다음과 같이 <code>setEnableTransactionSupport</code> 메소드를 통해 Transaction을 활성화 시키면 
+Redis Connection을 <code>MULTI</code>를 작동시킨 Thread에 강제로 바인딩한다.
+
+```java
+@Transcation
+public void serviceFunc() {
+    ...
+}
+```
+
+다음과 같이 <code>@Transaction</code> 어노테이션을 사용하여 적용시킬 수 있다. 
