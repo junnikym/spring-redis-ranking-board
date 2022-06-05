@@ -514,8 +514,6 @@ Spring에서 Redis Transaction을 적용하는 방법은 크게 2가지가 있�
 하나는 Operation에서 <code>multi</code>와 <code>exec</code>를 사용하는 것이고,
 다른 하나는 <code>@Transaction</code>어노테이션을 사용하는 것이다.
 
-이 글에서는 <code>@Transaction</code>을 활용하는 방법을 소개하고자 한다.
-
 [Spring Docs](https://spring.getdocs.org/en-US/spring-data-docs/spring-data-redis/reference/redis/tx.html)
 에 따르면 Spring에서 기본적으로 Transaction을 Disabled로 설정하고 있으며 아래와 같은 설정을 통해 Transaction을 활성화 시켜야 <code>@Transaction</code> 어노테이션을 사용할 수 있다.
 
@@ -572,9 +570,61 @@ public void serviceFunc() {
 
 다음과 같이 <code>@Transaction</code> 어노테이션을 사용하여 적용시킬 수 있다. 
 
+### Test
+
+```java
+@SpringBootTest
+public class RedisTransactionTest {
+
+  @Autowired
+  RedisTemplate<String, String> redisTemplate;
+
+  final boolean exceptionOccurred = true;
+
+  @Test
+  void sessionTransactionTest() {
+    Assertions.assertThrows(RuntimeException.class, this::sessionTransactionServiceFunc);
+    Assertions.assertEquals(redisTemplate.opsForValue().get("tx_test_session"), null);
+  }
+
+  @Test
+  void annotationTransactionTest() {
+    Assertions.assertThrows(RuntimeException.class, this::sessionTransactionServiceFunc);
+    Assertions.assertEquals(redisTemplate.opsForValue().get("tx_test_annotation"), null);
+  }
+
+  void sessionTransactionServiceFunc() {
+
+    List<Object> txResults = redisTemplate.execute(new SessionCallback<List<Object>>() {
+      public List<Object> execute(RedisOperations operations) throws DataAccessException {
+        operations.multi(); 		// redis transaction 시작
+
+        operations.opsForValue().set("tx_test_session", "1");
+
+        if (exceptionOccurred) {
+          throw new RuntimeException("Exception Occurred");
+        }
+
+        return operations.exec();	// redis transaction 적용
+      }
+    });
+  }
+
+  @Transactional	// redis transaction 시작
+  void serviceFunc() {
+    redisTemplate.opsForValue().set("tx_test_annotation", "1");
+
+    if (exceptionOccurred)
+      throw new RuntimeException("exception occur");
+  }
+
+}
+
+```
+
 ---
 
-### Single-Thread vs Multi-Thread
+## Single-Thread vs Multi-Thread
 
 Redis를 서칭하다보면 Redis는 Single-Thread 라는 블로그도 있으며 Multi-Thread 라는 블로그도 존재한다.
 
