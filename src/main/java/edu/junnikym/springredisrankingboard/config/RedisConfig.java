@@ -1,6 +1,7 @@
 package edu.junnikym.springredisrankingboard.config;
 
 import edu.junnikym.springredisrankingboard.redis.service.RedisMessageSubscriber;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
@@ -12,14 +13,19 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.PersistenceContext;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 
 @Configuration
+@RequiredArgsConstructor
 @EnableTransactionManagement    // Transaction 활성화
 public class RedisConfig {
 
@@ -52,13 +58,14 @@ public class RedisConfig {
 	// Transaction 활성화를 위한 PlatformTransactionManager baens
 	@Bean
 	public PlatformTransactionManager transactionManager() throws SQLException {
-		return new DataSourceTransactionManager(dataSource());
+//		return new DataSourceTransactionManager(dataSource());
+		return new JpaTransactionManager();
 	}
 
-	@Bean
-	public DataSource dataSource() throws SQLException {
-		return DataSourceBuilder.create().build();
-	}
+//	@Bean
+//	public DataSource dataSource() throws SQLException {
+//		return DataSourceBuilder.create().build();
+//	}
 
 	@Bean
 	MessageListenerAdapter messageListener(RedisMessageSubscriber redisMessageSubscriber) {
