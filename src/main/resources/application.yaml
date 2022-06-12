@@ -9,10 +9,10 @@ spring:
         username: root
         password: 1q2w3e4r!@
 
-        jpa:
-            database: mysql
-            show-sql: true
-            generate-ddl: true
+    jpa:
+        database: mysql
+        show-sql: true
+        generate-ddl: true
 
-            hibernate:
-                ddl-auto: update
+        hibernate:
+            ddl-auto: update

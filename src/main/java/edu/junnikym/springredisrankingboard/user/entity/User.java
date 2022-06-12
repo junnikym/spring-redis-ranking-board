@@ -2,20 +2,22 @@ package edu.junnikym.springredisrankingboard.user.entity;
 
 //@RedisHash (value="user", timeToLive=30)
 
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.GenericGenerator;
 import org.springframework.data.annotation.CreatedDate;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Getter
 @NoArgsConstructor
+@DynamicInsert
 public class User {
 
 	@Id
@@ -24,10 +26,11 @@ public class User {
 	@Column(columnDefinition = "BINARY(16)")
 	private UUID id;
 
-	@Column(nullable = false)
+	@Column(nullable = false, unique=true)
 	private String nickname;
 
-	@Column(nullable = false, columnDefinition = "0")
+	@Column()
+	@ColumnDefault("0")
 	private Long score;
 
 	@CreatedDate
