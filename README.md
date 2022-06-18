@@ -650,3 +650,83 @@ Main-Thread 외 나머지 3개의 Sub-Thread 의 역할은 다음과 같다
 > 조회 명령은 기록되지 않으며 이 외에도 RDB<sub>Redis Database</sub> 방식이 존재하는데 이는 특정 시점에 Snapshot을 바이너리 파일로 저장하여 AOF보다 파일 사이즈가 작으면서도 로딩속도가 빠르다. <br/>
 > <br/>
 > 따라서 매 명령에 기록되는 AOF가 RDB보다 안전하기 때문에 안전성을 추구하면 AOF를, 안정성보다 속도를 추구하면 RDB를 사용하면된다. (default는 AOF를 사용한다.)
+
+---
+
+## Redis Caching Strategies
+
+Redis는 RDB보다 read, write가 훨신 빠르다. 따라서 Redis를 Cache Server로 활용을 많이한다.
+이때 Redis로 캐싱하는 할 때에는 여러가지 방식이 존재한다.  
+
+### 1. Lazy Loading
+
+ - Redis에서 데이터를 조회한다
+
+   1. 데이터가 있을 경우 
+      1. Redis에서 가져온 데이터 사용
+      
+   2. 데이터가 없을 경우 
+      1. RDB에서 데이터를 가져온 후 Redis에 Caching 한다.
+      2. 이후 캐싱된 데이터를 사용
+
+해당 방식의 단점으로는
+- <code>Cache Miss</code>가 이루어지면 3가지의 패널티를 가져, 연산이 많아짐으로 Cache Miss가 많으면 많을수록 더 큰 딜레이를 유발한다.
+- 최신 데이터가 아닐 수 있다.
+
+
+### 2. Write Through
+
+  - Write 시
+    - Redis에 데이터를 Write
+    - RDB에 데이터를 Write
+
+  - Read 시
+    - Redis에서 데이터를 Read
+
+해당 방식의 단점으로는 
+ - Write에서 2번의 작업이 이루어지기 때문에 2번의 패널티를 가짐, 따라서 쓰기가 많은 서비스의 경우 딜레이가 많이 유발된다.
+ - 대부분의 리소스는 쓰지않는 데이터이기 때문에 리소스 낭비로 이어질 수 있다.
+
+### Cache Stampede
+
+#### 1. PER <sub>Probablistic Early Recomputation</sub>
+
+Key가 만료될 경우, 사용자의 요청이 오면 RDB로부터 데이터를 Caching하게 된다. 
+만약 <code>TTL</code>을 적게 설정했고, 여러 클라이언트로부터 Key에 대한 데이터를 요청받는다면 아래 그림고 같이 RDB에 같은 데이터를 여러번 요청이 갈 수 있다.
+
+![pub/sub and brocker, topic](./img/cacheStampede.png)
+
+<code>PER</code><sub>Probablistic Early Recomputation</sub> 알고리즘을 통해 이러한 현상을 방지할 수 있다. <br/>
+TTL이 완전히 만료되기 전, 일정 확률로 Caching 된 매모리를 갱신하여 Cache Stampede 현상을 방지하는 것.
+
+```java
+Object fetch(String key, Long expiryGap){
+    final Long ttl = template.getExpire("test",TimeUnit.MILLISECONDS);
+	
+    if(ttl - (Math.random() * expiryGap) > 0)
+        return template.expire(key, 1000, TimeUnit.MILLISECONDS);
+    
+    return null;
+}
+```
+
+ttl 만료 이전 랜덤으로 null 값을 반환함으로써, Caching System은 다시 RDB로 부터 Caching을 진행하여 데이터와 TTL을 다시 설정한다.
+
+* ref : <https://meetup.toast.com/posts/251>
+
+#### 2. Debouncing 
+
+위에서 설명한 PER 외에도 Front-End에서 사용되는 Debouncing을 활용하여 Cache Stampede를 해결할 수 있다.
+
+> Debounce & Throttle <br/>
+> 만약 Front-End에서 스크롤 또는 드래그와 같은 동작이 실행될 때, 픽셀이 변할 이벤트가 발생하면 연산이 이루어질 것이며, 그만큼 성능도 많이 들 것이다.
+> 그렇기 때문에 일정한 시간 또는 특정 연속된 이벤트가 끝날 때 작업을 실행시키는 것을 <code>Debounce</code>와 <code>Throttle</code>이라 한다. <br/>
+> * ref : <https://webclub.tistory.com/607>
+
+같은 Key에 관한 Reader가 여러명일 경우, 1번째 Reader가 읽기 시도를 마칠 동안 나머지 Reader는 계속 대기함으로써 RDB 요청이 한번만 이루어지도록 한다. 
+
+* ref : <https://meetup.toast.com/posts/251>
+
+#### 3. TTL 
+
+TTL 시간을 늘리는 방법도 하나의 방법이다.
