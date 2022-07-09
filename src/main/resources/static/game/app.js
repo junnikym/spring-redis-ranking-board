@@ -204,6 +204,8 @@ document.addEventListener('DOMContentLoaded', () =>  {
       resultDisplay.innerHTML = 'You LOSE'
       document.removeEventListener('keyup', control)
       setTimeout(() => clear(), 3000)
+      alert("You LOSE");
+      window.location.href = "/rank";
     }
   }
 
