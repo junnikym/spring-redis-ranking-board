@@ -348,6 +348,15 @@ Redis의 <code>Subscribe</code>, <code>Unsubscribe</code>, <code>Publish</code>�
 
 * ref : <https://sugerent.tistory.com/585>
 
+#### <추가>
+
+이러한 pub/sub 패턴을 활용하면 서비스를 비동기적으로 구동할 수 있다. 
+
+예를 들어 서비스(가) 내부에서 독립적인 서비스 (A),(B)가 실행될 때, <br/>
+pub/sub 패턴을 활용하여 (가)에서 메시지를 발행하고 Subscriber인 (A),(B)가 해당 메시지를 받아 처리한다면 (A),(B)는 동시에 실행될 수 있다.
+
+이러한 비동기적 특성때문에 MSA에서 서비스간 통신을 위해 사용되거나 CQRS에서 Command DB와 Query DB를 동기화 시키기위해 사용되기도 한다.
+
 ### On Spring
 
 < Configuration Class >
