@@ -27,7 +27,9 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User find(String nickname) {
-		return userJpaRepository.findByNickname(nickname);
+		return userJpaRepository
+				.findByNickname(nickname)
+				.orElseThrow(()-> new IllegalArgumentException("Can not found user"));
 	}
 
 	@Override

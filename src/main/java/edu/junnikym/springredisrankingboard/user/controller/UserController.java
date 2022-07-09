@@ -56,4 +56,11 @@ public class UserController {
 		return ResponseEntity.status(423).build();
 	}
 
+	@ExceptionHandler
+	public ResponseEntity<String> notFoundUser(
+			IllegalArgumentException ex
+	) {
+		return ResponseEntity.status(404).build();
+	}
+
 }
