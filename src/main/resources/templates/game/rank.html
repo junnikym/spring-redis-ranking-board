@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>2048</title>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .border {
+            width: 480px;
+        }
+
+        .board-item {
+            width: 100%;
+            height: 30px;
+            border: 1px solid;
+            border-radius: 5px;
+
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .board-item-id {
+            width: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .board-item-nickname {
+            width: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .board-item-score {
+            width: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="border">
+        <div th:each="it: ${ranks}" class="board-item">
+            <span th:text="${it.rank}" class="board-item-id"> </span>
+            <span th:text="${it.nickname}" class="board-item-nickname"> </span>
+            <span th:text="${it.score}" class="board-item-score"> </span>
+        </div>
+    </div>
+
+</body>
+</html>
