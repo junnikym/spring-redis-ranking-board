@@ -357,6 +357,15 @@ pub/sub 패턴을 활용하여 (가)에서 메시지를 발행하고 Subscriber�
 
 이러한 비동기적 특성때문에 MSA에서 서비스간 통신을 위해 사용되거나 CQRS에서 Command DB와 Query DB를 동기화 시키기위해 사용되기도 한다.
 
+##### Messaging Queueing / Messaging Pub/Sub
+
+<code>Messaging Queueing</code><sub><code>Point-to-Point Channel</code></sub>은 한 수신자만 메시지를 소비하게된다.
+따라서 만약 수신자가 여러명이면 Queue에 쌓인 Message를 하나씩 나누어 가지게된다. 
+
+<code>Messaging Pub/Sub</code>의 경우 <code>Broadcast</code>와 같이 구독된 모든 클라이언트에게 Message가 전달된다. 
+
+* ref : <https://brunch.co.kr/@springboot/374>
+
 ### On Spring
 
 < Configuration Class >
@@ -739,3 +748,4 @@ ttl 만료 이전 랜덤으로 null 값을 반환함으로써, Caching System은
 #### 3. TTL 
 
 TTL 시간을 늘리는 방법도 하나의 방법이다.
+
