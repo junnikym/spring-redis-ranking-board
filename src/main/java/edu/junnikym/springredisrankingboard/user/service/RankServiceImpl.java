@@ -51,8 +51,10 @@ public class RankServiceImpl implements RankService {
 	@Override
 	public RankResponseDto get (String nickname) {
 		final Long rank = operations.reverseRank(RANK_KEY, nickname);
-		final Double score = operations.score(RANK_KEY, nickname);
+		if(rank == null)
+			return null;
 
+		final Double score = operations.score(RANK_KEY, nickname);
 		return RankResponseDto.of(rank.intValue()+1, nickname, score);
 	}
 

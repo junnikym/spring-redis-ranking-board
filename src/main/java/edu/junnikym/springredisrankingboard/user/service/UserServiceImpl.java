@@ -18,11 +18,13 @@ public class UserServiceImpl implements UserService {
 
 	private final UserJpaRepository userJpaRepository;
 
+	private final ScoreProjectionPublisher scoreProjectionPublisher;
+
 	@Override
 	@Transactional
-	public User join(JoinRequestDto nickname) {
+	public void join(JoinRequestDto nickname) {
 		final User newUser = nickname.toEntity();
-		return userJpaRepository.save(newUser);
+		userJpaRepository.saveAndFlush(newUser);
 	}
 
 	@Override
@@ -34,9 +36,9 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	@Transactional
-	public User update (UpdateRequestDto request) {
+	public void update (UpdateRequestDto request) {
 
-		final User target = userJpaRepository.findById(request.getId())
+		final User target = userJpaRepository.findByNickname(request.getNickname())
 				.orElseThrow(()-> new EntityExistsException("Target is not exist"));
 
 		final long score = request.getScore();
@@ -44,7 +46,13 @@ public class UserServiceImpl implements UserService {
 			throw new NotGreaterScore();
 
 		target.setScore(score);
-		return userJpaRepository.save(target);
+		userJpaRepository.saveAndFlush(target);
+
+		projection(request);
+	}
+
+	private void projection(UpdateRequestDto request) {
+		scoreProjectionPublisher.publishMessage(request);
 	}
 
 

@@ -8,10 +8,10 @@ import java.util.UUID;
 
 public interface UserService {
 
-	User join(JoinRequestDto nickname);
+	void join(JoinRequestDto nickname);
 
 	User find(String nickname);
 
-	User update(UpdateRequestDto update);
+	void update(UpdateRequestDto update);
 
 }

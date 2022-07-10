@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.UUID;
 
@@ -38,8 +39,10 @@ public class UserController {
 
 	@PutMapping
 	public ResponseEntity<?> update(
+			HttpSession session,
 			@RequestBody UpdateRequestDto request
 	) {
+		request.setNickname ((String) session.getAttribute("user"));
 		userService.update(request);
 
 		return ResponseEntity.ok().build();

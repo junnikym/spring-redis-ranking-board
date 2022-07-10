@@ -204,8 +204,23 @@ document.addEventListener('DOMContentLoaded', () =>  {
       resultDisplay.innerHTML = 'You LOSE'
       document.removeEventListener('keyup', control)
       setTimeout(() => clear(), 3000)
+
       alert("You LOSE");
-      window.location.href = "/rank";
+
+      let xhr = new XMLHttpRequest();
+      xhr.open("PUT", "/api/v1/user");
+
+      xhr.setRequestHeader("Accept", "application/json");
+      xhr.setRequestHeader("Content-Type", "application/json");
+
+      xhr.onload = () => {
+        if (xhr.status === 200)
+          window.location.href = "/rank";
+      }
+
+      const data = '{"score": '+score+'}';
+
+      xhr.send(data);
     }
   }
 
