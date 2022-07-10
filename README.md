@@ -749,3 +749,27 @@ ttl 만료 이전 랜덤으로 null 값을 반환함으로써, Caching System은
 
 TTL 시간을 늘리는 방법도 하나의 방법이다.
 
+---
+
+## Ranking Board
+
+<div align="center">
+	<img src="./img/rankingBoard.jpg" width="50%" alter="archive sns logo" />
+</div>
+
+* 게임은 2048을 택하였으며 Github에 올라온 [kubowania/2048](https://github.com/kubowania/2048) 를 활용하였다.
+
+### Service Flow
+
+1. 게임 시작은 닉네임을 입력하며 시작한다.
+   1. 닉네임 입력 시 RDB에서 등록된 닉네임이 있는지 확인
+   2. 없을 시 새로운 데이터를 생성한다.
+   3. 닉네임을 세션에 등록한다.
+   4. 게임 페이지로 Redirection
+2. 게임오버가 발생 시 점수를 업데이트한다.
+   1. 점수가 기존 점수보다 낮을 경우 아무것도 하지 않음.
+   2. 점수가 기존 점수보다 높을 경우 RDB에 저장한다.
+   3. 저장이 완료되면 Redis에 업데이트된 데이터를 publish 한다.
+   4. subscriber 가 해당 publish 된 데이터를 받아 Redis에 데이터를 저장
+3. Ranking Board를 보여준다.
+   1. ZSet을 활용하여 저장된 데이터를 Score 순으로 Top N 의 데이터를 들고온다.
